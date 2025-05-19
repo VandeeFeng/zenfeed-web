@@ -1455,7 +1455,7 @@
     <!-- Bottom Center Read Count: UPDATED to use store -->
     {#if $todayReadCountStore > 0}
         <div
-            class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white shadow-lg backdrop-blur-sm flex items-center space-x-2 text-sm font-bold transition-all duration-300 ease-out select-none"
+            class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-warning text-warning-content shadow-lg backdrop-blur-sm flex items-center space-x-2 text-sm font-bold transition-all duration-300 ease-out select-none hover:shadow-xl hover:bg-warning/90"
             in:fly={{ y: 20, duration: 400, easing: cubicOut }}
         >
             <svg
@@ -1463,16 +1463,17 @@
                 viewBox="0 0 20 20"
                 fill="currentColor"
                 class="w-5 h-5 opacity-90"
-                ><path
+            >
+                <path
                     fill-rule="evenodd"
                     d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
                     clip-rule="evenodd"
-                /></svg
-            >
+                />
+            </svg>
             <span class="font-normal">{$_("past24h.todayReadPrefix")}</span>
             {#key $todayReadCountStore}
                 <span
-                    class="inline-block min-w-[1.5ch] text-center text-lg font-extrabold bg-white/20 px-1.5 rounded-md"
+                    class="inline-block min-w-[1.5ch] text-center text-lg font-extrabold bg-warning-content/10 px-2 py-0.5 rounded-md"
                     in:fly={{
                         y: -8,
                         duration: 250,

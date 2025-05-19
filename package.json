@@ -27,7 +27,7 @@
         "@types/js-yaml": "^4.0.9",
         "@types/qrcode": "^1.5.5",
         "cross-env": "^7.0.3",
-        "daisyui": "^5.0.19",
+        "daisyui": "^5.0.35",
         "html-to-image": "^1.11.13",
         "prettier": "^3.4.2",
         "prettier-plugin-svelte": "^3.3.3",

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: winter --default, night --prefersdark;
+  themes: silk --default, dim --prefersdark;
 }
 
 @media (prefers-color-scheme: dark) {

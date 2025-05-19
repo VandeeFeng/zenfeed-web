@@ -4,9 +4,6 @@ import type { ReadItemsMap } from '$lib/utils/dateUtils'; // Import type if need
 
 const READ_ITEMS_STORAGE_KEY = 'zenfeed_read_feeds';
 
-// --- Private State ---
-let markAsReadSound: HTMLAudioElement | null = null;
-
 // Function to initialize the store and load data
 function createReadItemsStore() {
     const initialMap: ReadItemsMap = new Map();
@@ -31,11 +28,6 @@ function createReadItemsStore() {
             console.error('Failed to load/parse read items from localStorage:', e);
             localStorage.removeItem(READ_ITEMS_STORAGE_KEY); // Clear potentially corrupted data
         }
-
-        // Preload audio effect for marking as read
-        markAsReadSound = new Audio('/sounds/woodfish.mp3');
-        markAsReadSound.volume = 0.5;
-        markAsReadSound.load();
     }
 
     // --- Public API for the store ---
@@ -45,11 +37,6 @@ function createReadItemsStore() {
         markRead: (itemId: string) => update(currentMap => {
             // Only update if the item is not already marked as read
             if (!currentMap.has(itemId)) {
-                // Play sound effect if available
-                if (markAsReadSound) {
-                    markAsReadSound.currentTime = 0; // Reset playback position
-                    markAsReadSound.play().catch(error => console.warn('Audio playback failed:', error));
-                }
                 // Create a new map to ensure reactivity
                 const newMap = new Map(currentMap);
                 newMap.set(itemId, Date.now()); // Add item with current timestamp

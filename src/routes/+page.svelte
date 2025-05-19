@@ -124,14 +124,6 @@
         {/if}
         <div class="tab flex-grow justify-end">
             <a
-                href="/wechat.png"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-ghost btn-circle mr-2 tooltip tooltip-bottom"
-            >
-                <img src="/wechat.png" alt="WeChat Group" class="w-6 h-6" />
-            </a>
-            <a
                 href="https://github.com/glidea/zenfeed"
                 target="_blank"
                 rel="noopener noreferrer"

@@ -595,114 +595,8 @@
 </script>
 
 <div class="container mx-auto min-h-screen space-y-6 bg-base-200 p-4 md:p-8">
-    <div
-        class="card bg-base-100 border-base-300/50 rounded-xl border shadow-lg"
-    >
-        <div class="card-body p-4 md:p-6">
-            {#if isLoading}
-                <div class="flex h-40 items-center justify-center">
-                    <span
-                        class="loading loading-spinner loading-lg text-primary"
-                    ></span>
-                </div>
-            {:else if error}
-                <div role="alert" class="alert alert-error rounded-lg">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 shrink-0 stroke-current"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        ><path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        /></svg
-                    >
-                    <span class="font-semibold"
-                        >{$_("settings.sources.errorLoadingPrefix")}</span
-                    >
-                    <span class="ml-1">{error}</span>
-                </div>
-            {:else if sources.length === 0}
-                <p class="text-base-content/80 py-4 text-center">
-                    {$_("settings.sources.emptyState")}
-                </p>
-            {:else}
-                <div class="overflow-x-auto">
-                    <table class="table table-zebra w-full">
-                        <tbody>
-                            {#each sources as source (source.ui_id)}
-                                <tr class="hover">
-                                    <td class="font-medium">{source.name}</td>
-                                    <td class="max-w-xs break-all text-sm">
-                                        {#if source.rss?.url}
-                                            <span
-                                                class="badge badge-primary badge-outline mr-1 whitespace-nowrap"
-                                                >{$_(
-                                                    "settings.sources.typeUrl",
-                                                )}</span
-                                            >
-                                            {source.rss.url}
-                                        {:else if source.rss?.rsshub_route_path}
-                                            <span
-                                                class="badge badge-secondary badge-outline mr-1 whitespace-nowrap"
-                                                >{$_(
-                                                    "settings.sources.typeRsshub",
-                                                )}</span
-                                            >
-                                            {source.rss.rsshub_route_path}
-                                        {:else}
-                                            <span class="badge badge-ghost"
-                                                >-</span
-                                            >
-                                        {/if}
-                                    </td>
-                                    <td class="text-right">
-                                        <button
-                                            class="btn btn-ghost btn-xs text-error"
-                                            on:click={() =>
-                                                deleteSource(source.ui_id)}
-                                            title={$_(
-                                                "settings.sources.deleteButtonTitle",
-                                            )}
-                                            disabled={isSubmitting ||
-                                                isImportingOpml}
-                                        >
-                                            {#if isSubmitting}
-                                                <span
-                                                    class="loading loading-spinner loading-xs"
-                                                ></span>
-                                            {:else}
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke-width="1.5"
-                                                    stroke="currentColor"
-                                                    class="h-4 w-4"
-                                                    ><path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                                                    /></svg
-                                                >
-                                            {/if}
-                                        </button>
-                                    </td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </table>
-                </div>
-            {/if}
-        </div>
-    </div>
-
     <!-- Add New Source Section -->
-    <div
-        class="card bg-base-100 border-base-300/50 rounded-xl border shadow-lg"
-    >
+    <div class="card bg-base-100 border-base-300/50 rounded-xl border shadow-lg">
         <div class="card-body p-4 md:p-6">
             {#if !addMode}
                 <!-- Initial Add Mode Selection -->
@@ -1144,6 +1038,109 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            {/if}
+        </div>
+    </div>
+
+    <!-- Current Sources Section -->
+    <div class="card bg-base-100 border-base-300/50 rounded-xl border shadow-lg">
+        <div class="card-body p-4 md:p-6">
+            {#if isLoading}
+                <div class="flex h-40 items-center justify-center">
+                    <span
+                        class="loading loading-spinner loading-lg text-primary"
+                    ></span>
+                </div>
+            {:else if error}
+                <div role="alert" class="alert alert-error rounded-lg">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 shrink-0 stroke-current"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        ><path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        /></svg
+                    >
+                    <span class="font-semibold"
+                        >{$_("settings.sources.errorLoadingPrefix")}</span
+                    >
+                    <span class="ml-1">{error}</span>
+                </div>
+            {:else if sources.length === 0}
+                <p class="text-base-content/80 py-4 text-center">
+                    {$_("settings.sources.emptyState")}
+                </p>
+            {:else}
+                <div class="overflow-x-auto">
+                    <table class="table table-zebra w-full">
+                        <tbody>
+                            {#each sources as source (source.ui_id)}
+                                <tr class="hover">
+                                    <td class="font-medium">{source.name}</td>
+                                    <td class="max-w-xs break-all text-sm">
+                                        {#if source.rss?.url}
+                                            <span
+                                                class="badge badge-primary badge-outline mr-1 whitespace-nowrap"
+                                                >{$_(
+                                                    "settings.sources.typeUrl",
+                                                )}</span
+                                            >
+                                            {source.rss.url}
+                                        {:else if source.rss?.rsshub_route_path}
+                                            <span
+                                                class="badge badge-secondary badge-outline mr-1 whitespace-nowrap"
+                                                >{$_(
+                                                    "settings.sources.typeRsshub",
+                                                )}</span
+                                            >
+                                            {source.rss.rsshub_route_path}
+                                        {:else}
+                                            <span class="badge badge-ghost"
+                                                >-</span
+                                            >
+                                        {/if}
+                                    </td>
+                                    <td class="text-right">
+                                        <button
+                                            class="btn btn-ghost btn-xs text-error"
+                                            on:click={() =>
+                                                deleteSource(source.ui_id)}
+                                            title={$_(
+                                                "settings.sources.deleteButtonTitle",
+                                            )}
+                                            disabled={isSubmitting ||
+                                                isImportingOpml}
+                                        >
+                                            {#if isSubmitting}
+                                                <span
+                                                    class="loading loading-spinner loading-xs"
+                                                ></span>
+                                            {:else}
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke-width="1.5"
+                                                    stroke="currentColor"
+                                                    class="h-4 w-4"
+                                                    ><path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                                                    /></svg
+                                                >
+                                            {/if}
+                                        </button>
+                                    </td>
+                                </tr>
+                            {/each}
+                        </tbody>
+                    </table>
                 </div>
             {/if}
         </div>
