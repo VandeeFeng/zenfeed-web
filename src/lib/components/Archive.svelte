@@ -38,7 +38,7 @@
 
     // --- Constants ---
     // const READ_ITEMS_STORAGE_KEY = "zenfeed_read_feeds"; // REMOVED: Handled by readStateStore
-    const GROUP_BY_LABEL_STORAGE_KEY = "zenfeed_group_by_label";
+    const GROUP_BY_LABEL_STORAGE_KEY = "zenfeed_archive_group_by_label";
     const ACTIVE_GROUP_NAME_STORAGE_KEY = "zenfeed_active_group_name"; // New Key for active tab
     const SCROLL_POSITION_STORAGE_KEY = "zenfeed_scroll_position"; // Key for scroll position
     const NAVIGATING_TO_DETAIL_KEY = "zenfeed_navigating_to_detail"; // NEW: Key for navigation flag
