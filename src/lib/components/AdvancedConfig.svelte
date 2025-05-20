@@ -6,11 +6,33 @@
 
     // Component State
     let yamlConfig = $state("");
+    let originalConfig = $state<any>(null);
     let isLoading = $state(true); // Loading state for initial fetch
     let error = $state<string | null>(null); // Error state for initial fetch
     let isSaving = $state(false); // Loading state for saving
     let saveError = $state<string | null>(null); // Error state specifically for saving
     let saveSuccessMessage = $state<string | null>(null); // Success message state for saving
+
+    // Mask sensitive fields in the config
+    function maskSensitiveInfo(config: any): any {
+        if (!config) return config;
+        const sensitiveKeys = ['api_key', 'apiKey', 'token', 'secret', 'password', 'auth_token', 'access_token'];
+        
+        const maskedConfig = JSON.parse(JSON.stringify(config));
+        
+        function maskObject(obj: any) {
+            for (const key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    maskObject(obj[key]);
+                } else if (typeof obj[key] === 'string' && sensitiveKeys.some(k => key.toLowerCase().includes(k.toLowerCase()))) {
+                    obj[key] = '********';
+                }
+            }
+        }
+        
+        maskObject(maskedConfig);
+        return maskedConfig;
+    }
 
     // --- Async Functions ---
 
@@ -39,7 +61,9 @@
                 );
             }
             const configJson = await res.json();
-            yamlConfig = yaml.dump(configJson);
+            originalConfig = configJson;
+            const maskedConfig = maskSensitiveInfo(configJson);
+            yamlConfig = yaml.dump(maskedConfig);
         } catch (e: any) {
             error =
                 e.message ||
@@ -62,9 +86,14 @@
             if (yamlConfig.trim() === "") {
                 throw new Error($_("advancedConfig.emptyConfigError"));
             }
-            const configJson = yaml.load(yamlConfig);
+            let configJson = yaml.load(yamlConfig);
             if (typeof configJson !== "object" || configJson === null) {
                 throw new Error($_("advancedConfig.invalidYamlError"));
+            }
+
+            // Restore masked values from original config
+            if (originalConfig) {
+                configJson = restoreSensitiveValues(configJson, originalConfig);
             }
 
             const res = await fetch(getTargetApiUrl("/apply_config"), {
@@ -96,10 +125,36 @@
                 $_("advancedConfig.errorSaving", {
                     values: { error: "Unknown error" },
                 });
-            console.error("Error saving config with YAML:", yamlConfig, e);
+            console.error("Error saving config:", e);
         } finally {
             isSaving = false;
         }
+    }
+
+    // Restore original sensitive values if they weren't changed
+    function restoreSensitiveValues(newConfig: any, originalConfig: any): any {
+        const sensitiveKeys = ['api_key', 'apiKey', 'token', 'secret', 'password', 'auth_token', 'access_token'];
+        
+        function restoreValues(newObj: any, origObj: any) {
+            for (const key in newObj) {
+                if (typeof newObj[key] === 'object' && newObj[key] !== null) {
+                    if (origObj && typeof origObj[key] === 'object') {
+                        restoreValues(newObj[key], origObj[key]);
+                    }
+                } else if (
+                    typeof newObj[key] === 'string' && 
+                    newObj[key] === '********' && 
+                    sensitiveKeys.some(k => key.toLowerCase().includes(k.toLowerCase())) &&
+                    origObj && origObj[key]
+                ) {
+                    newObj[key] = origObj[key];
+                }
+            }
+        }
+        
+        const resultConfig = JSON.parse(JSON.stringify(newConfig));
+        restoreValues(resultConfig, originalConfig);
+        return resultConfig;
     }
 
     // --- Lifecycle ---
