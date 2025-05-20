@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import * as yaml from "js-yaml";
     import { _ } from "svelte-i18n";
-    import { getTargetApiUrl } from "$lib/utils/apiUtils";
+    import { getTargetApiUrl, getApiRequestOptions } from "$lib/utils/apiUtils";
 
     // Component State
     let yamlConfig = $state("");
@@ -43,12 +43,10 @@
         saveSuccessMessage = null;
 
         try {
-            const res = await fetch(getTargetApiUrl("/query_config"), {
-                method: "POST",
-                headers: {
-                    Accept: "application/json",
-                },
-            });
+            const res = await fetch(
+                getTargetApiUrl("/query_config"),
+                getApiRequestOptions("POST")
+            );
 
             if (!res.ok) {
                 const errorText = await res.text();
@@ -96,13 +94,10 @@
                 configJson = restoreSensitiveValues(configJson, originalConfig);
             }
 
-            const res = await fetch(getTargetApiUrl("/apply_config"), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(configJson),
-            });
+            const res = await fetch(
+                getTargetApiUrl("/apply_config"),
+                getApiRequestOptions("POST", configJson)
+            );
 
             if (!res.ok) {
                 const errorText = await res.text();

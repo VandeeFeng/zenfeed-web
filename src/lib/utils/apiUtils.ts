@@ -51,3 +51,21 @@ export function getTargetApiUrl(endpointPath: string): string {
 
     return targetUrl;
 }
+
+/**
+ * Get API request options with proper headers and configuration
+ */
+export function getApiRequestOptions(method: string = 'GET', body?: any): RequestInit {
+    const options: RequestInit = {
+        method,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    return options;
+}

@@ -4,7 +4,7 @@
     import { fly } from "svelte/transition";
     import { cubicOut } from "svelte/easing";
     import { _ } from "svelte-i18n";
-    import { getTargetApiUrl } from "$lib/utils/apiUtils";
+    import { getTargetApiUrl, getApiRequestOptions } from "$lib/utils/apiUtils";
     import { env } from "$env/dynamic/public";
     import { goto } from "$app/navigation";
     import { selectedFeedStore, queryFeedsStore } from "$lib/stores/feedStore"; // Renamed import to avoid conflict
@@ -234,17 +234,16 @@
             const sevenDaysAgo = new Date(today);
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-            const response = await fetch(getTargetApiUrl("/query"), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            const response = await fetch(
+                getTargetApiUrl("/query"),
+                getApiRequestOptions("POST", {
                     start: sevenDaysAgo.toISOString(),
                     end: now.toISOString(),
                     limit: 500,
                     query: searchTerm,
                     summarize: !!searchTerm,
-                }),
-            });
+                })
+            );
 
             if (!response.ok) {
                 const errorText = await response.text();

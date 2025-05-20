@@ -1,6 +1,6 @@
 import { error as skError } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { env } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 
 const disableApiProxyQueryConfig = env.PUBLIC_DISABLE_API_PROXY_QUERY_CONFIG === "true";
 const disableApiProxyApplyConfig = env.PUBLIC_DISABLE_API_PROXY_APPLY_CONFIG === "true";
@@ -35,19 +35,39 @@ const handler: RequestHandler = async (event) => {
 
     const targetUrl = `${backendUrl}/${endpointPath}`;
 
-    console.log(`Proxying ${request.method} request for /api/${endpointPath} to: ${targetUrl}`); // Optional: server-side logging
+    console.log(`Proxying ${request.method} request for /api/${endpointPath} to: ${targetUrl}`);
 
     try {
-        // Forward the request to the backend
+        // Get headers from the original request
+        const headers = new Headers({
+            'Content-Type': request.headers.get('Content-Type') || 'application/json',
+            'Accept': request.headers.get('Accept') || '*/*',
+        });
+
+        // Add bearer token if available
+        const bearerToken = env.PRIVATE_BEARER_TOKEN;
+        console.log('Bearer token status:', !!bearerToken);
+        if (bearerToken) {
+            headers.set('Authorization', `Bearer ${bearerToken}`);
+        }
+
+        // Forward the request to the backend with the updated headers
         const response = await fetch(targetUrl, {
             method: request.method,
-            headers: {
-                'Content-Type': request.headers.get('Content-Type') || '',
-                'Accept': request.headers.get('Accept') || '*/*',
-            },
+            headers: headers,
             body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : null,
             duplex: 'half'
         } as RequestInit);
+
+        if (!response.ok) {
+            console.log('Backend response:', response.status);
+            const responseText = await response.text();
+            return new Response(responseText, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: new Headers(response.headers)
+            });
+        }
 
         return new Response(response.body, {
             status: response.status,

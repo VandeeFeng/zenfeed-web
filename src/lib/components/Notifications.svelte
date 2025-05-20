@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
     import { apiUrl } from "$lib/stores/apiUrl";
     import { get } from "svelte/store";
-    import { getTargetApiUrl } from "$lib/utils/apiUtils";
+    import { getTargetApiUrl, getApiRequestOptions } from "$lib/utils/apiUtils";
     interface EmailChannel {
         smtp_endpoint?: string;
         from?: string;
@@ -57,6 +57,7 @@
     let error: string | null = null;
     let saveStatus: "idle" | "saving" | "success" | "error" = "idle";
     let saveError: string | null = null;
+    let saveSuccessMessage: string | null = null;
 
     // Form state derived from appConfig
     let emailSmtpEndpoint = "";
@@ -70,8 +71,13 @@
         isLoading = true;
         error = null;
         saveStatus = "idle";
+        saveError = null;
+        saveSuccessMessage = null;
         try {
-            const response = await fetch(getTargetApiUrl("/query_config"));
+            const response = await fetch(
+                getTargetApiUrl("/query_config"),
+                getApiRequestOptions("POST")
+            );
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -93,6 +99,7 @@
         }
         saveStatus = "saving";
         saveError = null;
+        saveSuccessMessage = null;
 
         let configToSend: any; // Use 'any' since we don't assume full App structure
         try {
@@ -240,13 +247,10 @@
             const updatedConfigJSON = JSON.stringify(configToSend, null, 2); // Pretty print for potential debugging
 
             // 4. Send the merged config to API
-            const response = await fetch(getTargetApiUrl("/apply_config"), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: updatedConfigJSON, // Send the modified JSON string
-            });
+            const response = await fetch(
+                getTargetApiUrl("/apply_config"),
+                getApiRequestOptions("POST", updatedConfigJSON)
+            );
 
             if (!response.ok) {
                 const errorBody = await response.text();
@@ -257,6 +261,7 @@
 
             // 5. Update local state on success
             saveStatus = "success";
+            saveSuccessMessage = $_("notifications.saveSuccess");
             // Update the base JSON string first
             appConfigJSON = updatedConfigJSON;
             // Then update the 'patched' state by re-parsing the successful JSON
@@ -518,7 +523,7 @@
                 </button>
                 {#if saveStatus === "success"}
                     <span class="text-success text-sm"
-                        >{$_("notifications.saveSuccess")}</span
+                        >{saveSuccessMessage}</span
                     >
                 {:else if saveStatus === "error"}
                     <span class="text-error text-sm"
