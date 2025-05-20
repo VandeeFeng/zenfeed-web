@@ -87,7 +87,7 @@
 
     <div role="tablist" class="tabs tabs-bordered mb-6 pl-8">
         {#if availableTabs.includes("past")}
-            <a
+            <button
                 role="tab"
                 class="tab pl-4 {activeTab === 'past' ? 'tab-active' : ''}"
                 onclick={() => setActiveTab("past")}
@@ -95,10 +95,10 @@
                 tabindex={activeTab === "past" ? 0 : -1}
             >
                 {$_("tabs.past24h")}
-            </a>
+            </button>
         {/if}
         {#if availableTabs.includes("archive")}
-            <a
+            <button
                 role="tab"
                 class="tab pl-4 {activeTab === 'archive' ? 'tab-active' : ''}"
                 onclick={() => setActiveTab("archive")}
@@ -106,10 +106,10 @@
                 tabindex={activeTab === "archive" ? 0 : -1}
             >
                 {$_("tabs.archive")}
-            </a>
+            </button>
         {/if}
         {#if !disableNotifications && availableTabs.includes("notifications")}
-            <a
+            <button
                 role="tab"
                 class="tab pl-4 {activeTab === 'notifications'
                     ? 'tab-active'
@@ -120,10 +120,10 @@
                 tabindex={activeTab === "notifications" ? 0 : -1}
             >
                 {$_("tabs.notifications")}
-            </a>
+            </button>
         {/if}
         {#if !disableAdvancedConfig && availableTabs.includes("advanced")}
-            <a
+            <button
                 role="tab"
                 class="tab pl-4 {activeTab === 'advanced' ? 'tab-active' : ''}"
                 onclick={() => setActiveTab("advanced")}
@@ -132,7 +132,7 @@
                 tabindex={activeTab === "advanced" ? 0 : -1}
             >
                 {$_("tabs.advancedConfig")}
-            </a>
+            </button>
         {/if}
         <div class="tab flex-grow justify-end">
             <a
@@ -141,6 +141,7 @@
                 rel="noopener noreferrer"
                 class="btn btn-ghost btn-circle mr-2 tooltip tooltip-bottom"
                 data-tip={$_("nav.githubStarTooltip")}
+                aria-label={$_("nav.githubStarTooltip")}
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -156,6 +157,7 @@
             <button
                 class="btn btn-ghost btn-circle"
                 onclick={() => (showSettingsModal = true)}
+                aria-label={$_("nav.settingsButtonLabel")}
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"

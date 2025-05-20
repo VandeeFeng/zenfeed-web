@@ -815,6 +815,24 @@
             }
         }
     }
+
+    function handleGroupByChange(labelKey: string) {
+        if (selectedGroupByLabel !== labelKey) {
+            selectedGroupByLabel = labelKey;
+            saveGroupByPreference(labelKey);
+        }
+    }
+
+    function saveGroupByPreference(labelKey: string) {
+        if (typeof localStorage !== "undefined") {
+            try {
+                localStorage.setItem(GROUP_BY_LABEL_STORAGE_KEY, labelKey);
+            } catch (e) {
+                console.error("Failed to save group by preference:", e);
+                // TODO: Add toast notification for save failure if needed
+            }
+        }
+    }
 </script>
 
 <div
@@ -832,9 +850,9 @@
                     <div
                         tabindex="0"
                         role="button"
-                        class="btn btn-sm btn-outline btn-neutral min-w-[8rem] h-10 justify-between font-normal"
+                        class="btn btn-outline btn-primary min-w-[8rem] h-10 justify-between font-normal"
                     >
-                        <span class="text-lg text-base-content/80">
+                        <span class="text-lg">
                             {selectedGroupByLabel === 'pub_time' ? 'pub_date' : selectedGroupByLabel}
                         </span>
                         <svg
@@ -852,38 +870,28 @@
                         >
                     </div>
                     <ul
-                        tabindex="0"
+                        role="listbox"
+                        aria-label="Group by options"
                         class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 mt-1 max-h-60 overflow-y-auto"
                     >
                         {#each availableGroupByLabels as labelKey}
                             <li>
-                                <a
-                                    href="#"
-                                    role="button"
+                                <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={selectedGroupByLabel === labelKey}
+                                    class="w-full text-left"
                                     class:active={selectedGroupByLabel === labelKey}
-                                    on:click|preventDefault={() => {
-                                        if (selectedGroupByLabel !== labelKey) {
-                                            selectedGroupByLabel = labelKey;
-                                            // Save directly on selection
-                                            if (
-                                                typeof localStorage !==
-                                                "undefined"
-                                            ) {
-                                                try {
-                                                    localStorage.setItem(
-                                                        GROUP_BY_LABEL_STORAGE_KEY,
-                                                        selectedGroupByLabel,
-                                                    );
-                                                } catch (e) {
-                                                    console.error(
-                                                        "Failed to save group by preference:",
-                                                        e,
-                                                    );
-                                                }
-                                            }
+                                    on:click={() => handleGroupByChange(labelKey)}
+                                    on:keydown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            handleGroupByChange(labelKey);
                                         }
-                                    }}>{labelKey === 'pub_time' ? 'pub_date' : labelKey}</a
+                                    }}
                                 >
+                                    {labelKey === 'pub_time' ? 'pub_date' : labelKey}
+                                </button>
                             </li>
                         {/each}
                     </ul>
@@ -903,7 +911,7 @@
                     disabled={isLoading}
                 />
                 <button
-                    class="btn btn-primary rounded-lg"
+                    class="btn btn-outline btn-primary rounded-lg"
                     on:click={handleSearch}
                     disabled={isLoading}
                 >
@@ -926,7 +934,7 @@
                 </button>
                 {#if !isLoading && (searchTerm || (searchResults && Object.keys(groupedFeeds).length === 0 && !searchTerm))}
                     <button
-                        class="btn btn-ghost rounded-lg"
+                        class="btn btn-outline btn-primary rounded-lg"
                         on:click={() => {
                             searchTerm = "";
                             handleSearch();
@@ -1084,10 +1092,10 @@
                                 </button>
                             {/each}
                             <!-- Filler tab for style -->
-                            <a
-                                role="tab"
+                            <div
+                                aria-hidden="true"
                                 class="tab flex-1 cursor-default [--tab-border-color:oklch(var(--b3))]"
-                            ></a>
+                            ></div>
                         </div>
                     {/if}
 
