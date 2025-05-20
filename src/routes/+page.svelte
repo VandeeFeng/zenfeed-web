@@ -4,6 +4,7 @@
     import Past24h from "$lib/components/Past24h.svelte";
     import Notifications from "$lib/components/Notifications.svelte";
     import AdvancedConfig from "$lib/components/AdvancedConfig.svelte";
+    import Archive from "$lib/components/Archive.svelte";
     import SettingsModal from "$lib/components/SettingsModal.svelte";
     import { _ } from "svelte-i18n"; // Import the translation function
     import { env } from "$env/dynamic/public"; // Import env
@@ -14,8 +15,8 @@
     const dismissedAnnouncementKey = "dismissedAnnouncementText";
 
     // Define available tabs based on env vars
-    type AvailableTab = "past" | "notifications" | "advanced";
-    let availableTabs: AvailableTab[] = ["past"];
+    type AvailableTab = "past" | "archive" | "notifications" | "advanced";
+    let availableTabs: AvailableTab[] = ["past", "archive"];
     if (!disableNotifications) {
         availableTabs.push("notifications");
     }
@@ -96,6 +97,17 @@
                 {$_("tabs.past24h")}
             </a>
         {/if}
+        {#if availableTabs.includes("archive")}
+            <a
+                role="tab"
+                class="tab pl-4 {activeTab === 'archive' ? 'tab-active' : ''}"
+                onclick={() => setActiveTab("archive")}
+                onkeypress={(e) => e.key === "Enter" && setActiveTab("archive")}
+                tabindex={activeTab === "archive" ? 0 : -1}
+            >
+                {$_("tabs.archive")}
+            </a>
+        {/if}
         {#if !disableNotifications && availableTabs.includes("notifications")}
             <a
                 role="tab"
@@ -171,6 +183,8 @@
     <div>
         {#if activeTab === "past"}
             <Past24h />
+        {:else if activeTab === "archive"}
+            <Archive />
         {:else if activeTab === "notifications" && !disableNotifications}
             <Notifications />
         {:else if activeTab === "advanced" && !disableAdvancedConfig}

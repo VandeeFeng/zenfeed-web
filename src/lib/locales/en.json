@@ -92,7 +92,8 @@
     "tabs": {
         "past24h": "Past 24h",
         "notifications": "Notifications",
-        "advancedConfig": "Advanced Config"
+        "advancedConfig": "Advanced Config",
+        "archive": "Archive"
     },
     "past24h": {
         "fullArticle": "More",
@@ -108,6 +109,7 @@
         "errorApi": "API Error {status}: {detail}",
         "uncategorizedGroup": "Uncategorized",
         "markAsReadHint": "Right-click to mark as read",
+        "markGroupAsReadHint": "Right click to mark all items in this group as read",
         "untitledFeed": "Untitled Feed",
         "tooltipCloseHint": "Click to close",
         "emptyStateSearch": "No feeds found for \"{searchTerm}\"",

@@ -92,7 +92,8 @@
     "tabs": {
         "past24h": "过去 24 小时",
         "notifications": "通知",
-        "advancedConfig": "高级配置"
+        "advancedConfig": "高级配置",
+        "archive": "已读"
     },
     "past24h": {
         "fullArticle": "更多",
@@ -108,6 +109,7 @@
         "errorApi": "API 错误 {status}: {detail}",
         "uncategorizedGroup": "未分类",
         "markAsReadHint": "右键标记为已读",
+        "markGroupAsReadHint": "右键标记此组全部已读",
         "untitledFeed": "无标题订阅",
         "tooltipCloseHint": "点击关闭",
         "emptyStateSearch": "未找到 \"{searchTerm}\" 的相关订阅",

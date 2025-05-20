@@ -144,32 +144,28 @@
                 ? filteredGroupedFeeds[activeGroupName]
                 : [];
 
-            // 6. Update the selected feed
-            if (groupChanged) {
-                selectedFeedDesktop =
-                    currentGroupFeeds && currentGroupFeeds.length > 0
-                        ? currentGroupFeeds[0]
-                        : null;
-            } else if (currentGroupFeeds && currentGroupFeeds.length > 0) {
-                // UPDATED: Use $readItemsStore to check if selected is still unread
-                const selectedFeedStillExistsAndUnread =
-                    selectedFeedDesktop &&
-                    currentGroupFeeds.some(
-                        (feed) =>
-                            getFeedItemId(feed) ===
-                                getFeedItemId(selectedFeedDesktop!) &&
-                            !$readItemsStore.has(getFeedItemId(feed)), // Check against store
-                    );
-                if (!selectedFeedStillExistsAndUnread) {
-                    // Find the first unread item in the current group if the selected one is gone or read
-                    selectedFeedDesktop =
-                        currentGroupFeeds.find(
-                            (feed) => !$readItemsStore.has(getFeedItemId(feed)),
-                        ) || null;
+            // 6. Update the selected feed - MODIFIED for Archive view
+            if (currentGroupFeeds && currentGroupFeeds.length > 0) {
+                if (groupChanged || !selectedFeedDesktop) {
+                    // Select first feed when group changes or no feed is selected
+                    selectedFeedDesktop = currentGroupFeeds[0];
+                    rightPanelHtml = selectedFeedDesktop.labels?.summary_html_snippet ?? "";
+                } else {
+                    // Check if currently selected feed still exists in the current group
+                    const selectedFeedStillExists = selectedFeedDesktop &&
+                        currentGroupFeeds.some(
+                            (feed) => getFeedItemId(feed) === getFeedItemId(selectedFeedDesktop!)
+                        );
+                    
+                    if (!selectedFeedStillExists) {
+                        // If selected feed is gone, select the first feed in current group
+                        selectedFeedDesktop = currentGroupFeeds[0];
+                        rightPanelHtml = selectedFeedDesktop.labels?.summary_html_snippet ?? "";
+                    }
                 }
-                // If no unread items left, selectedFeedDesktop will become null
             } else {
                 selectedFeedDesktop = null;
+                rightPanelHtml = "";
             }
         } else if (!isLoading) {
             // No groups available or loading finished with no groups
@@ -177,7 +173,7 @@
                 // Only update if it changes to null
                 activeGroupName = null;
                 selectedFeedDesktop = null;
-                // Removal from storage is handled in the dedicated saving block below
+                rightPanelHtml = "";
             }
         }
         // Dependencies: sortedGroupEntries, isLoading, filteredGroupedFeeds, $readItemsStore
@@ -202,19 +198,19 @@
 
     // --- Utility Functions ---
 
-    // UPDATED: Accepts readItemsMap from store
+    // UPDATED: Accepts readItemsMap from store and shows read items instead of unread ones
     function filterReadItems(
         groups: GroupedFeeds,
         readItemsMap: ReadItemsMap, // Accept the map as argument
     ): GroupedFeeds {
         const filteredGroups: GroupedFeeds = {};
         for (const source in groups) {
-            // Use the passed readItemsMap for filtering
-            const unreadFeeds = groups[source].filter(
-                (feed) => !readItemsMap.has(getFeedItemId(feed)), // Use imported getFeedItemId here too
+            // Use the passed readItemsMap for filtering - INVERTED LOGIC to show read items
+            const readFeeds = groups[source].filter(
+                (feed) => readItemsMap.has(getFeedItemId(feed)), // Show only read items
             );
-            if (unreadFeeds.length > 0) {
-                filteredGroups[source] = unreadFeeds;
+            if (readFeeds.length > 0) {
+                filteredGroups[source] = readFeeds;
             }
         }
         return filteredGroups;
@@ -234,15 +230,15 @@
             const now = new Date();
             // Set to start of today
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            // Set to start of yesterday
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+            // Set to 7 days ago
+            const sevenDaysAgo = new Date(today);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
             const response = await fetch(getTargetApiUrl("/query"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    start: yesterday.toISOString(),
+                    start: sevenDaysAgo.toISOString(),
                     end: now.toISOString(),
                     limit: 500,
                     query: searchTerm,
@@ -412,80 +408,60 @@
 
     // --- Item Interaction Handlers ---
 
-    // RENAMED and UPDATED: Now uses readItemsStore.markRead and handles desktop selection logic
+    // UPDATED: Accepts readItemsMap from store and shows read items instead of unread ones
     function handleMarkReadAndSelectNextDesktop(itemId: string) {
-        // Use the store to mark as read (handles sound, saving, updating the map)
-        readItemsStore.markRead(itemId);
-
-        // --- Find the next feed to select (Desktop only) ---
+        // Since this is the archive view, we don't need to mark items as read
+        // Instead, we just need to handle selection logic
         let nextSelectedFeed: FeedVO | null = null;
         if (!isMobile && activeGroupName && groupedFeeds[activeGroupName]) {
-            const currentGroupOriginalFeeds = groupedFeeds[activeGroupName]; // Use the *original* list for finding index
-            const markedIndex = currentGroupOriginalFeeds.findIndex(
+            const currentGroupOriginalFeeds = groupedFeeds[activeGroupName];
+            const currentIndex = currentGroupOriginalFeeds.findIndex(
                 (feed) => getFeedItemId(feed) === itemId,
             );
 
-            if (markedIndex !== -1) {
-                // Use the *latest* read map from the store ($readItemsStore) to find the *next unread*
-                const currentReadMap = get(readItemsStore); // Get current map snapshot
-
-                // Try finding the next *unread* item in the current group
-                for (
-                    let i = markedIndex + 1;
-                    i < currentGroupOriginalFeeds.length;
-                    i++
-                ) {
-                    const potentialNextFeed = currentGroupOriginalFeeds[i];
-                    if (!currentReadMap.has(getFeedItemId(potentialNextFeed))) {
-                        // Check against latest map
-                        nextSelectedFeed = potentialNextFeed;
-                        break;
-                    }
+            if (currentIndex !== -1) {
+                // Try finding the next item in the current group
+                if (currentIndex + 1 < currentGroupOriginalFeeds.length) {
+                    nextSelectedFeed = currentGroupOriginalFeeds[currentIndex + 1];
+                } else if (currentIndex > 0) {
+                    // If no next item, try the previous one
+                    nextSelectedFeed = currentGroupOriginalFeeds[currentIndex - 1];
                 }
-
-                // If no next unread item, try finding the previous *unread* item
-                if (!nextSelectedFeed) {
-                    for (let i = markedIndex - 1; i >= 0; i--) {
-                        const potentialPrevFeed = currentGroupOriginalFeeds[i];
-                        if (
-                            !currentReadMap.has(
-                                getFeedItemId(potentialPrevFeed),
-                            )
-                        ) {
-                            // Check against latest map
-                            nextSelectedFeed = potentialPrevFeed;
-                            break;
-                        }
-                    }
-                }
-                // If still no unread item found (neither next nor previous),
-                // nextSelectedFeed remains null, which will clear the detail panel.
             } else {
-                // If the marked item wasn't found (edge case?), keep selection unless it was the marked one
+                // If the current item wasn't found, keep selection unless it was the marked one
                 if (
                     selectedFeedDesktop &&
                     getFeedItemId(selectedFeedDesktop) === itemId
                 ) {
-                    nextSelectedFeed = null; // Clear selection if the missing item was the selected one
+                    nextSelectedFeed = null;
                 } else {
-                    nextSelectedFeed = selectedFeedDesktop; // Keep existing selection
+                    nextSelectedFeed = selectedFeedDesktop;
                 }
             }
-            selectedFeedDesktop = nextSelectedFeed; // Update selection
+            selectedFeedDesktop = nextSelectedFeed;
         }
-        // No need to save read items here, store handles it.
     }
 
     // NEW: Select feed for desktop detail view
     function selectFeedForDetail(event: MouseEvent, feed: FeedVO) {
         event.preventDefault(); // Prevent default link navigation on desktop
-        selectedFeedDesktop = feed;
+        if (feed.labels?.summary_html_snippet) {
+            selectedFeedDesktop = feed;
+            rightPanelHtml = feed.labels.summary_html_snippet;
+            if (detailPanelContentElement) {
+                detailPanelContentElement.scrollTop = 0;
+            }
+        } else {
+            console.warn('Feed has no summary_html_snippet:', feed);
+            selectedFeedDesktop = feed;
+            rightPanelHtml = '<p class="italic text-neutral-content/50">' + $_("past24h.noSummaryAvailable") + '</p>';
+        }
     }
 
     // Mobile click handler (unchanged, navigates)
     function handleFeedClickMobile(event: MouseEvent, feed: FeedVO) {
         event.preventDefault();
-        const itemId = getFeedItemId(feed); // Use imported getFeedItemId
+        const itemId = getFeedItemId(feed);
 
         // --- SAVE SCROLL POSITION & NAVIGATION CONTEXT ---
         if (
@@ -498,9 +474,9 @@
                     SCROLL_POSITION_STORAGE_KEY,
                     String(window.scrollY),
                 );
-                sessionStorage.setItem(NAVIGATING_TO_DETAIL_KEY, "true"); // Set navigation flag
+                sessionStorage.setItem(NAVIGATING_TO_DETAIL_KEY, "true");
 
-                // --- NEW: Store grouping context for swiping ---
+                // --- Store grouping context for swiping ---
                 const groupName =
                     feed.labels[selectedGroupByLabel] ||
                     $_("past24h.uncategorizedGroup");
@@ -509,7 +485,6 @@
                     selectedGroupByLabel,
                 );
                 sessionStorage.setItem(SWIPE_GROUP_NAME_KEY, groupName);
-                // --- END NEW ---
             } catch (e) {
                 console.error(
                     "Failed to save scroll/navigation/group state to sessionStorage:",
@@ -517,10 +492,9 @@
                 );
             }
         }
-        // --- END SAVE ---
 
         const feedDetailData = {
-            id: itemId, // Pass the ID as well
+            id: itemId,
             title: feed.labels.title || $_("past24h.untitledFeed"),
             tags: feed.labels.tags || "",
             summaryHtmlSnippet: feed.labels.summary_html_snippet || "",
@@ -534,11 +508,9 @@
                 "selectedFeedDetail",
                 JSON.stringify(feedDetailData),
             );
-            // --- STORE ITEM ID TO MARK ON RETURN ---
-            sessionStorage.setItem(LAST_VIEWED_MOBILE_FEED_ID_KEY, itemId); // Store the ID
         } catch (e) {
             console.error(
-                "Failed to save feed detail/ID to sessionStorage:",
+                "Failed to save feed detail to sessionStorage:",
                 e,
             );
         }
@@ -546,10 +518,23 @@
         goto("/feed-detail");
     }
 
-    // Context menu handler (UPDATED: Use new function name)
-    function handleMarkAsRead(event: MouseEvent, feed: FeedVO) {
+    // Context menu handler for marking items as unread
+    function handleMarkAsUnread(event: MouseEvent, feed: FeedVO) {
         event.preventDefault();
-        handleMarkReadAndSelectNextDesktop(getFeedItemId(feed)); // Use new function
+        const feedId = getFeedItemId(feed);
+        readItemsStore.markUnread(feedId);
+        handleMarkReadAndSelectNextDesktop(feedId);
+    }
+
+    // Context menu handler for marking all items in a group as unread
+    function handleMarkGroupAsUnread(event: MouseEvent, feeds: FeedVO[]) {
+        event.preventDefault();
+        feeds.forEach(feed => {
+            const feedId = getFeedItemId(feed);
+            if ($readItemsStore.has(feedId)) {
+                readItemsStore.markUnread(feedId);
+            }
+        });
     }
 
     // Custom transition (unchanged)
@@ -624,18 +609,6 @@
                 copyStatus = "idle";
             }, 2000);
         }
-    }
-
-    // 添加新的处理函数
-    function handleMarkGroupAsRead(event: MouseEvent, feeds: FeedVO[]) {
-        event.preventDefault();
-        // 标记组内所有未读文章为已读
-        feeds.forEach(feed => {
-            const feedId = getFeedItemId(feed);
-            if (!$readItemsStore.has(feedId)) {
-                readItemsStore.markRead(feedId);
-            }
-        });
     }
 
     // --- Lifecycle ---
@@ -847,31 +820,6 @@
 <div
     class="from-base-100 via-base-200/50 to-base-100 min-h-screen space-y-6 bg-gradient-to-br p-4 md:p-8 relative"
 >
-    <!-- Add Source Button -->
-    {#if !disableAddSource}
-        <div class="absolute top-4 right-4 md:top-8 md:right-8 z-10">
-            <a
-                href="/settings/sources"
-                class="btn btn-outline btn-primary btn-sm rounded-lg"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="h-4 w-4 mr-1.5"
-                    ><path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                    /></svg
-                >
-                {$_("past24h.addSourceButton")}
-            </a>
-        </div>
-    {/if}
-
     <!-- Search Section -->
     <div class="flex flex-wrap items-center gap-3">
         <!-- Group By Dropdown -->
@@ -948,7 +896,7 @@
             <div class="mx-auto flex flex-1 items-center gap-3">
                 <input
                     type="search"
-                    placeholder={$_("past24h.searchPlaceholder")}
+                    placeholder="Search archived items..."
                     class="input input-bordered input-primary focus:ring-primary focus:border-primary w-full max-w-lg rounded-lg px-4 py-2.5 text-base focus:ring-2 focus:outline-none"
                     bind:value={searchTerm}
                     on:keydown={handleKeydown}
@@ -1060,7 +1008,7 @@
                 </div>
             </div>
         {:else if Object.keys(filteredGroupedFeeds).length === 0}
-            <!-- Combined Empty State (No Results / All Read) -->
+            <!-- Combined Empty State (No Results / No Read Items) -->
             <div
                 class="border-base-300 bg-base-200 flex h-full min-h-[350px] flex-col items-center justify-center rounded-xl border border-dashed p-10 text-center"
             >
@@ -1081,22 +1029,20 @@
                 </svg>
                 <p class="text-neutral-focus mb-2 text-lg font-semibold">
                     {#if searchTerm}
-                        {$_("past24h.emptyStateSearch", {
-                            values: { searchTerm: searchTerm },
-                        })}
+                        No archived items match "{searchTerm}"
                     {:else if Object.keys(groupedFeeds).length > 0 && Object.keys(filteredGroupedFeeds).length === 0}
-                        {$_("past24h.emptyStateAllRead")}
+                        No archived items yet
                     {:else}
-                        {$_("past24h.emptyStateNoFeeds")}
+                        No items found
                     {/if}
                 </p>
                 <p class="text-neutral/80 mb-6 text-sm">
                     {#if searchTerm}
-                        {$_("past24h.emptyStateSearchHint")}
+                        Try a different search term
                     {:else if Object.keys(groupedFeeds).length > 0 && Object.keys(filteredGroupedFeeds).length === 0}
-                        {$_("past24h.emptyStateAllReadHint")}
+                        Items you've read will appear here
                     {:else}
-                        {$_("past24h.emptyStateNoFeedsHint")}
+                        Try adding some RSS feeds to get started
                     {/if}
                 </p>
             </div>
@@ -1126,8 +1072,8 @@
                                             selectedFeedDesktop = firstUnread;
                                         }
                                     }}
-                                    on:contextmenu={(e) => handleMarkGroupAsRead(e, feeds)}
-                                    title={$_("past24h.markGroupAsReadHint")}
+                                    on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
+                                    title="Right-click to remove all items in this group from archive"
                                 >
                                     <span
                                         class="truncate max-w-[100px] lg:max-w-[150px]"
@@ -1151,9 +1097,7 @@
                             class="flex items-center justify-center text-xs text-base-content/70 py-1 mb-2 text-center gap-2"
                         >
                             <span>
-                                💡 <span class="italic"
-                                    >{$_("past24h.desktopRightClickTip")}</span
-                                >
+                                💡 <span class="italic">Right-click an item to remove it from the archive</span>
                             </span>
                             <button
                                 class="btn btn-xs btn-ghost !text-info hover:bg-info/10 normal-case"
@@ -1179,7 +1123,7 @@
                                                 selectedFeedDesktop,
                                             ) === getFeedItemId(feed)}
                                         on:contextmenu={(e) =>
-                                            handleMarkAsRead(e, feed)}
+                                            handleMarkAsUnread(e, feed)}
                                         out:shrinkFadeOut={{ duration: 400 }}
                                     >
                                         <a
@@ -1190,7 +1134,7 @@
                                                     selectedFeedDesktop,
                                                 ) === getFeedItemId(feed)}
                                             rel="noopener noreferrer"
-                                            title={$_("past24h.markAsReadHint")}
+                                            title="Right-click to remove from archive"
                                             on:click={(e) =>
                                                 selectFeedForDetail(e, feed)}
                                         >
@@ -1406,8 +1350,8 @@
                         <div class="card-body p-5">
                             <h2
                                 class="card-title mb-3 truncate text-base font-semibold cursor-pointer"
-                                title={$_("past24h.markGroupAsReadHint")}
-                                on:contextmenu={(e) => handleMarkGroupAsRead(e, feeds)}
+                                title="Right-click to remove all items in this group from archive"
+                                on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
                             >
                                 {groupName}
                             </h2>
@@ -1418,7 +1362,7 @@
                                 {#each feeds as feed (getFeedItemId(feed))}
                                     <li
                                         class="truncate"
-                                        on:contextmenu={(e) => handleMarkAsRead(e, feed)}
+                                        on:contextmenu={(e) => handleMarkAsUnread(e, feed)}
                                         out:shrinkFadeOut={{ duration: 500 }}
                                         title={feed.labels.title || $_("past24h.untitledFeed")}
                                     >

@@ -54,6 +54,26 @@ function createReadItemsStore() {
             }
             return currentMap; // Return the unchanged map if item was already read
         }),
+        // Function to mark an item as unread (remove from read items)
+        markUnread: (itemId: string) => update(currentMap => {
+            if (currentMap.has(itemId)) {
+                // Create a new map to ensure reactivity
+                const newMap = new Map(currentMap);
+                newMap.delete(itemId); // Remove the item
+
+                // Save the updated map to localStorage (client-side only)
+                if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+                    try {
+                        const storableArray = Array.from(newMap.entries());
+                        localStorage.setItem(READ_ITEMS_STORAGE_KEY, JSON.stringify(storableArray));
+                    } catch (e) {
+                        console.error('Failed to save read items to localStorage:', e);
+                    }
+                }
+                return newMap; // Return the updated map for the store
+            }
+            return currentMap; // Return the unchanged map if item was not read
+        }),
         // Utility function to check read status (can be used outside reactive contexts)
         isRead: (itemId: string, currentMap: ReadItemsMap): boolean => {
             return currentMap.has(itemId);
