@@ -96,13 +96,21 @@
     // let todayReadCount = calculateTodayReadCount(readItems); // REMOVED: Use todayReadCountStore
     // Use derived store directly in the template: $todayReadCountStore
 
-    // Sort the groups by number of items in each group (descending)
+    // Sort the groups by name or special rules for score/tags
     $: sortedGroupEntries = Object.entries(filteredGroupedFeeds).sort((a, b) => {
-        // First sort by count (descending)
-        const countDiff = b[1].length - a[1].length;
-        if (countDiff !== 0) return countDiff;
-        
-        // If counts are equal, sort alphabetically
+        if (selectedGroupByLabel === 'score') {
+            // For score groups, sort by score value (low to high)
+            const scoreA = parseFloat(a[0] || '0');
+            const scoreB = parseFloat(b[0] || '0');
+            return scoreA - scoreB;
+        } else if (selectedGroupByLabel === 'tags') {
+            // For tags, sort by number of items in each group (descending)
+            const countDiff = b[1].length - a[1].length;
+            if (countDiff !== 0) return countDiff;
+            // If counts are equal, sort alphabetically
+            return a[0].localeCompare(b[0]);
+        }
+        // Default sorting: alphabetically
         return a[0].localeCompare(b[0]);
     });
 
@@ -388,7 +396,6 @@
             });
         });
 
-        // Sort feeds within each group
         for (const groupValue in groups) {
             groups[groupValue].sort(compareFeeds);
         }
@@ -1229,6 +1236,10 @@
                                                     ]}]</span
                                                 >
                                             {/if}
+                                            <!-- Add feed source -->
+                                            {#if feed.labels.source}
+                                                <div class="text-xs text-base-content/50 mb-0.5">[{feed.labels.source}]</div>
+                                            {/if}
                                             <span
                                                 class="break-words line-clamp-2 leading-tight"
                                             >
@@ -1455,6 +1466,10 @@
                                         >
                                             {#if FEED_TITLE_PREFIX_LABEL && FEED_TITLE_PREFIX_LABEL !== selectedGroupByLabel && feed.labels[FEED_TITLE_PREFIX_LABEL]}
                                                 <span class="mr-1 opacity-60">[{feed.labels[FEED_TITLE_PREFIX_LABEL]}]</span>
+                                            {/if}
+                                            <!-- Add feed source -->
+                                            {#if feed.labels.source}
+                                                <div class="text-xs text-base-content/50 mb-0.5">[{feed.labels.source}]</div>
                                             {/if}
                                             {feed.labels.title || $_("past24h.untitledFeed")}
                                         </a>
