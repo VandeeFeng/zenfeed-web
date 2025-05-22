@@ -1109,69 +1109,62 @@
                 <div class="md:w-1/3 lg:w-2/5 flex flex-col">
                     <!-- Tabs for Groups -->
                     {#if sortedGroupEntries.length > 1}
-                        <div class="flex flex-col">
+                        <div
+                            role="tablist"
+                            class="tabs tabs-lifted tabs-sm mb-4 -mt-2"
+                        >
+                            {#each visibleGroupEntries as [groupName, feeds] (groupName)}
+                                <button
+                                    role="tab"
+                                    class="tab [--tab-bg:oklch(var(--b2))] [--tab-border-color:oklch(var(--b3))] [--tab-color:oklch(var(--nc))] font-medium cursor-pointer"
+                                    class:tab-active={activeGroupName === groupName}
+                                    class:!text-primary={activeGroupName === groupName}
+                                    on:click={() => {
+                                        if (activeGroupName !== groupName) {
+                                            activeGroupName = groupName;
+                                            const firstUnread = feeds.find(
+                                                (f) => !$readItemsStore.has(getFeedItemId(f)),
+                                            ) || null;
+                                            selectedFeedDesktop = firstUnread;
+                                        }
+                                    }}
+                                    on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
+                                    title="Right-click to remove all items in this group from archive"
+                                >
+                                    <span
+                                        class="truncate max-w-[100px] lg:max-w-[150px]"
+                                    >
+                                        {groupName}
+                                    </span>
+                                    <span class="ml-1.5 text-xs opacity-60">({feeds.length})</span>
+                                </button>
+                            {/each}
+                            <!-- Filler tab for style -->
                             <div
-                                role="tablist"
-                                class="tabs tabs-lifted tabs-sm mb-1 -mt-2"
-                            >
-                                {#each visibleGroupEntries as [groupName, feeds] (groupName)}
-                                    <button
-                                        role="tab"
-                                        class="tab [--tab-bg:oklch(var(--b2))] [--tab-border-color:oklch(var(--b3))] [--tab-color:oklch(var(--nc))] font-medium cursor-pointer"
-                                        class:tab-active={activeGroupName === groupName}
-                                        class:!text-primary={activeGroupName === groupName}
-                                        on:click={() => {
-                                            if (activeGroupName !== groupName) {
-                                                activeGroupName = groupName;
-                                                const firstUnread = feeds.find(
-                                                    (f) => !$readItemsStore.has(getFeedItemId(f)),
-                                                ) || null;
-                                                selectedFeedDesktop = firstUnread;
-                                            }
-                                        }}
-                                        on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
-                                        title="Right-click to remove all items in this group from archive"
-                                    >
-                                        <span
-                                            class="truncate max-w-[100px] lg:max-w-[150px]"
-                                        >
-                                            {groupName}
-                                        </span>
-                                        <span class="ml-1.5 text-xs opacity-60">({feeds.length})</span>
-                                    </button>
-                                {/each}
-                                <!-- Filler tab - only show when we have few tabs and not in tags mode -->
-                                {#if visibleGroupEntries.length < 5 && selectedGroupByLabel !== 'tags'}
-                                    <div
-                                        aria-hidden="true"
-                                        class="tab flex-1 cursor-default [--tab-border-color:oklch(var(--b3))]"
-                                    ></div>
-                                {/if}
-                            </div>
-
-                            <!-- NEW: Separate container for expand/collapse button -->
+                                aria-hidden="true"
+                                class="tab flex-1 cursor-default [--tab-border-color:oklch(var(--b3))]"
+                            ></div>
+                            <!-- Tags expand/collapse button -->
                             {#if showExpandButton}
-                                <div class="flex justify-end mb-4">
-                                    <button
-                                        class="btn btn-sm btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70 hover:text-primary rounded-lg"
-                                        on:click={toggleTagsExpansion}
-                                    >
-                                        {#if isTagsExpanded}
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-                                            </svg>
-                                            Collapse Tags
-                                        {:else}
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                                            </svg>
-                                            Show All Tags
-                                            <span class="ml-1.5 px-1.5 py-0.5 bg-base-300/50 rounded-md text-xs">
-                                                +{sortedGroupEntries.length - maxVisibleTags}
-                                            </span>
-                                        {/if}
-                                    </button>
-                                </div>
+                                <button
+                                    class="tab btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70 hover:text-primary"
+                                    on:click={toggleTagsExpansion}
+                                >
+                                    {#if isTagsExpanded}
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                                        </svg>
+                                        Collapse Tags
+                                    {:else}
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                        </svg>
+                                        Show All Tags
+                                        <span class="ml-1.5 px-1.5 py-0.5 bg-base-300/50 rounded-md text-xs">
+                                            +{sortedGroupEntries.length - maxVisibleTags}
+                                        </span>
+                                    {/if}
+                                </button>
                             {/if}
                         </div>
                     {/if}
