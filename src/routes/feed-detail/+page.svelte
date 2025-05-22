@@ -416,15 +416,14 @@
 
                         <!-- Inserted Tags Section for Mobile -->
                         {#if feedData.tags && feedData.tags.trim() !== ""}
-                            <div
-                                class="mb-4"
-                                style="font-size:14px; color:#5f6368;"
-                            >
-                                <span
-                                    style="display:inline-block; background-color:rgba(241, 243, 244, 0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.18); padding:4px 10px; border-radius:15px; margin-right:5px; color:#1a73e8; font-weight:500;"
-                                >
-                                    {feedData.tags}
-                                </span>
+                            <div class="mb-4">
+                                <div class="text-sm text-[#5f6368]">
+                                    {#each feedData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) as tag}
+                                        <span class="inline-block bg-[rgba(241,243,244,0.65)] backdrop-blur-md border border-white/20 px-2.5 py-1 rounded-full mr-1.5 mb-1.5 text-[#1a73e8] font-medium">
+                                            {tag}
+                                        </span>
+                                    {/each}
+                                </div>
                             </div>
                         {/if}
 

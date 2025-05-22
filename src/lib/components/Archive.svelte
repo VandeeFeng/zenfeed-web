@@ -96,10 +96,15 @@
     // let todayReadCount = calculateTodayReadCount(readItems); // REMOVED: Use todayReadCountStore
     // Use derived store directly in the template: $todayReadCountStore
 
-    // Sort the groups alphabetically by group name for tabs/display
-    $: sortedGroupEntries = Object.entries(filteredGroupedFeeds).sort((a, b) =>
-        a[0].localeCompare(b[0]),
-    );
+    // Sort the groups by number of items in each group (descending)
+    $: sortedGroupEntries = Object.entries(filteredGroupedFeeds).sort((a, b) => {
+        // First sort by count (descending)
+        const countDiff = b[1].length - a[1].length;
+        if (countDiff !== 0) return countDiff;
+        
+        // If counts are equal, sort alphabetically
+        return a[0].localeCompare(b[0]);
+    });
 
     // Update active tab and select first feed if needed
     $: {
@@ -354,18 +359,34 @@
     function groupFeeds(feeds: FeedVO[], groupByKey: string) {
         const groups: GroupedFeeds = {};
         feeds.forEach((feed) => {
-            let groupValue;
+            let groupValues: string[] = [];
             if (groupByKey === 'pub_time') {
-                groupValue = feed.time.split('T')[0];
+                groupValues = [feed.time.split('T')[0]];
+            } else if (groupByKey === 'tags' && feed.labels.tags) {
+                // Split tags and handle them individually
+                groupValues = feed.labels.tags
+                    .split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag.length > 0);
+                if (groupValues.length === 0) {
+                    groupValues = [$_("past24h.uncategorizedGroup")];
+                }
             } else {
-                groupValue = feed.labels[groupByKey] || $_("past24h.uncategorizedGroup");
+                groupValues = [feed.labels[groupByKey] || $_("past24h.uncategorizedGroup")];
             }
-            if (!groups[groupValue]) groups[groupValue] = [];
-            groups[groupValue].push(feed);
+
+            // Add feed to each of its tag groups
+            groupValues.forEach(groupValue => {
+                if (!groups[groupValue]) {
+                    groups[groupValue] = [];
+                }
+                groups[groupValue].push(feed);
+            });
         });
 
+        // Sort feeds within each group
         for (const groupValue in groups) {
-            groups[groupValue].sort(compareFeeds); 
+            groups[groupValue].sort(compareFeeds);
         }
         groupedFeeds = groups;
     }
@@ -1187,17 +1208,14 @@
                                     </h2>
                                     <!-- Container for Tags, Link and Share Button -->
                                     <div class="flex items-center gap-4 mb-4">
-                                        <!-- Inserted Tags Section -->
+                                        <!-- Tags Section -->
                                         {#if selectedFeedDesktop.labels?.tags?.trim()}
-                                            <div
-                                                style="font-size:14px; color:#5f6368;"
-                                            >
-                                                <span
-                                                    style="display:inline-block; background-color:rgba(241, 243, 244, 0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgba(255, 255, 255, 0.18); padding:4px 10px; border-radius:15px; margin-right:5px; color:#1a73e8; font-weight:500;"
-                                                >
-                                                    {selectedFeedDesktop.labels
-                                                        .tags}
-                                                </span>
+                                            <div class="text-sm text-[#5f6368]">
+                                                {#each selectedFeedDesktop.labels.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) as tag}
+                                                    <span class="inline-block bg-[rgba(241,243,244,0.65)] backdrop-blur-md border border-white/20 px-2.5 py-1 rounded-full mr-1.5 mb-1.5 text-[#1a73e8] font-medium">
+                                                        {tag}
+                                                    </span>
+                                                {/each}
                                             </div>
                                         {/if}
 
