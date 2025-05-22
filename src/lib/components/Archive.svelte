@@ -1212,7 +1212,7 @@
                                         {#if selectedFeedDesktop.labels?.tags?.trim()}
                                             <div class="text-sm text-[#5f6368]">
                                                 {#each selectedFeedDesktop.labels.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0) as tag}
-                                                    <span class="inline-block bg-[rgba(241,243,244,0.65)] backdrop-blur-md border border-white/20 px-2.5 py-1 rounded-full mr-1.5 mb-1.5 text-[#1a73e8] font-medium">
+                                                    <span class="inline-block bg-[rgba(241,243,244,0.65)] backdrop-blur-md border border-white/20 px-1 py-0.5 rounded-full mr-0.5 text-[#1a73e8] font-medium">
                                                         {tag}
                                                     </span>
                                                 {/each}
