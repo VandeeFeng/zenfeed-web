@@ -76,6 +76,10 @@
     let detailCardElement: HTMLDivElement | null = null;
     let copyStatus: "idle" | "copying" | "copied" | "error" = "idle";
 
+    // NEW: State for managing expanded tags
+    let isTagsExpanded = false;
+    let maxVisibleTags = 15; // Maximum number of tags to show when collapsed
+
     // --- Reactive Derived State ---
 
     // Add unique IDs to feeds (only needs to happen once after fetch)
@@ -212,6 +216,14 @@
         // (or changes), not just on initial mount if the element exists but no feed is selected yet.
         detailPanelContentElement.scrollTop = 0;
     }
+
+    // NEW: Get visible group entries based on expansion state
+    $: visibleGroupEntries = selectedGroupByLabel === 'tags' && !isTagsExpanded
+        ? sortedGroupEntries.slice(0, maxVisibleTags)
+        : sortedGroupEntries;
+
+    // NEW: Calculate if we need to show expand/collapse button
+    $: showExpandButton = selectedGroupByLabel === 'tags' && sortedGroupEntries.length > maxVisibleTags;
 
     // --- Utility Functions ---
 
@@ -864,6 +876,11 @@
             }
         }
     }
+
+    // NEW: Function to toggle tags expansion
+    function toggleTagsExpansion() {
+        isTagsExpanded = !isTagsExpanded;
+    }
 </script>
 
 <div
@@ -1092,46 +1109,75 @@
                 <div class="md:w-1/3 lg:w-2/5 flex flex-col">
                     <!-- Tabs for Groups -->
                     {#if sortedGroupEntries.length > 1}
-                        <div
-                            role="tablist"
-                            class="tabs tabs-lifted tabs-sm mb-4 -mt-2"
-                        >
-                            {#each sortedGroupEntries as [groupName, feeds] (groupName)}
-                                <button
-                                    role="tab"
-                                    class="tab [--tab-bg:oklch(var(--b2))] [--tab-border-color:oklch(var(--b3))] [--tab-color:oklch(var(--nc))] font-medium cursor-pointer"
-                                    class:tab-active={activeGroupName === groupName}
-                                    class:!text-primary={activeGroupName === groupName}
-                                    on:click={() => {
-                                        if (activeGroupName !== groupName) {
-                                            activeGroupName = groupName;
-                                            const firstUnread = feeds.find(
-                                                (f) => !$readItemsStore.has(getFeedItemId(f)),
-                                            ) || null;
-                                            selectedFeedDesktop = firstUnread;
-                                        }
-                                    }}
-                                    on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
-                                    title="Right-click to remove all items in this group from archive"
-                                >
-                                    <span
-                                        class="truncate max-w-[100px] lg:max-w-[150px]"
-                                    >
-                                        {groupName}
-                                    </span>
-                                    <span class="ml-1.5 text-xs opacity-60">({feeds.length})</span>
-                                </button>
-                            {/each}
-                            <!-- Filler tab for style -->
+                        <div class="flex flex-col">
                             <div
-                                aria-hidden="true"
-                                class="tab flex-1 cursor-default [--tab-border-color:oklch(var(--b3))]"
-                            ></div>
+                                role="tablist"
+                                class="tabs tabs-lifted tabs-sm mb-1 -mt-2"
+                            >
+                                {#each visibleGroupEntries as [groupName, feeds] (groupName)}
+                                    <button
+                                        role="tab"
+                                        class="tab [--tab-bg:oklch(var(--b2))] [--tab-border-color:oklch(var(--b3))] [--tab-color:oklch(var(--nc))] font-medium cursor-pointer"
+                                        class:tab-active={activeGroupName === groupName}
+                                        class:!text-primary={activeGroupName === groupName}
+                                        on:click={() => {
+                                            if (activeGroupName !== groupName) {
+                                                activeGroupName = groupName;
+                                                const firstUnread = feeds.find(
+                                                    (f) => !$readItemsStore.has(getFeedItemId(f)),
+                                                ) || null;
+                                                selectedFeedDesktop = firstUnread;
+                                            }
+                                        }}
+                                        on:contextmenu={(e) => handleMarkGroupAsUnread(e, feeds)}
+                                        title="Right-click to remove all items in this group from archive"
+                                    >
+                                        <span
+                                            class="truncate max-w-[100px] lg:max-w-[150px]"
+                                        >
+                                            {groupName}
+                                        </span>
+                                        <span class="ml-1.5 text-xs opacity-60">({feeds.length})</span>
+                                    </button>
+                                {/each}
+                                <!-- Filler tab - only show when we have few tabs and not in tags mode -->
+                                {#if visibleGroupEntries.length < 5 && selectedGroupByLabel !== 'tags'}
+                                    <div
+                                        aria-hidden="true"
+                                        class="tab flex-1 cursor-default [--tab-border-color:oklch(var(--b3))]"
+                                    ></div>
+                                {/if}
+                            </div>
+
+                            <!-- NEW: Separate container for expand/collapse button -->
+                            {#if showExpandButton}
+                                <div class="flex justify-end mb-4">
+                                    <button
+                                        class="btn btn-sm btn-ghost bg-base-200/50 hover:bg-base-200 text-base-content/70 hover:text-primary rounded-lg"
+                                        on:click={toggleTagsExpansion}
+                                    >
+                                        {#if isTagsExpanded}
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+                                            </svg>
+                                            Collapse Tags
+                                        {:else}
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                            </svg>
+                                            Show All Tags
+                                            <span class="ml-1.5 px-1.5 py-0.5 bg-base-300/50 rounded-md text-xs">
+                                                +{sortedGroupEntries.length - maxVisibleTags}
+                                            </span>
+                                        {/if}
+                                    </button>
+                                </div>
+                            {/if}
                         </div>
                     {/if}
 
                     <!-- Desktop Right-Click Tip -->
-                    {#if showRightClickTip && sortedGroupEntries.length > 0}
+                    {#if showRightClickTip && visibleGroupEntries.length > 0}
                         <div
                             class="flex items-center justify-center text-xs text-base-content/70 py-1 mb-2 text-center gap-2"
                         >
@@ -1383,7 +1429,7 @@
 
             <!-- MOBILE: Card Grid Layout (fallback for md down) -->
             <div class="grid grid-cols-1 gap-6 md:hidden">
-                {#each sortedGroupEntries as [groupName, feeds] (groupName)}
+                {#each visibleGroupEntries as [groupName, feeds] (groupName)}
                     <div
                         class="card bg-base-100 border-base-300 rounded-xl border shadow-lg transition-all duration-300 hover:shadow-xl"
                     >
