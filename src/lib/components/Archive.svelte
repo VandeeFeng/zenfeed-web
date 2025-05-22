@@ -110,6 +110,9 @@
             if (countDiff !== 0) return countDiff;
             // If counts are equal, sort alphabetically
             return a[0].localeCompare(b[0]);
+        } else if (selectedGroupByLabel === 'pub_time') {
+            // For pub_time, sort dates in descending order (newest first)
+            return b[0].localeCompare(a[0]);
         }
         // Default sorting: alphabetically
         return a[0].localeCompare(b[0]);
