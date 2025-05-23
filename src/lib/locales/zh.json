@@ -69,7 +69,8 @@
     "nav": {
         "home": "主页",
         "settings": "设置",
-        "githubStarTooltip": "Star 项目，支持我们走下去"
+        "githubStarTooltip": "Star 项目，支持我们走下去",
+        "syncTooltip": "同步阅读状态到服务器"
     },
     "advancedConfig": {
         "loading": "正在加载配置...",
@@ -116,6 +117,8 @@
         "emptyStateNoFeeds": "未找到",
         "emptyStateNoFeedsHint": "尝试添加更多订阅源或稍后再回来查看。",
         "emptyStateSearchHint": "尝试优化您的搜索词或稍后再试。",
+        "emptyStateAllRead": "已全部阅读完！",
+        "emptyStateAllReadHint": "您已阅读完所有内容，稍后再来看看新内容吧。",
         "mcpHint": "如需追问，推荐使用 MCP 客户端，参考 {cherryStudioLink}。",
         "todayReadPrefix": "今日已读",
         "todayReadSuffix": "篇",

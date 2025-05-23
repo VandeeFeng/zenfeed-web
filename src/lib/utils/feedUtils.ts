@@ -2,16 +2,16 @@ import { simpleHash } from "./hashUtils";
 import type { FeedVO } from "$lib/types/feed"; // Import the type
 
 /**
- * Generates a unique ID for a feed item based on its labels.
- * Uses a pre-calculated ID if available.
+ * Gets the feed ID, using the backend-provided numeric ID if available,
+ * falling back to hash generation only if needed.
  * @param feed Feed object
- * @returns Unique string ID for the feed
+ * @returns String representation of the feed ID
  */
 export function getFeedItemId(feed: FeedVO): string {
-    // Use pre-calculated ID if available
-    if (feed.id) return feed.id;
+    // Use backend-provided numeric ID if available
+    if (feed.id !== undefined) return feed.id.toString();
 
-    // Calculate otherwise
+    // Calculate hash as fallback
     const labels = feed.labels;
     // Sort keys for consistent hash input
     const sortedKeys = Object.keys(labels).sort();

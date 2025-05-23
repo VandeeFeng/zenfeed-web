@@ -69,7 +69,8 @@
     "nav": {
         "home": "Home",
         "settings": "Settings",
-        "githubStarTooltip": "Star the project to support us!"
+        "githubStarTooltip": "Star the project to support us!",
+        "syncTooltip": "Sync read status with server"
     },
     "advancedConfig": {
         "loading": "Loading configuration...",
@@ -116,6 +117,8 @@
         "emptyStateNoFeeds": "No feeds found in the past 24 hours",
         "emptyStateNoFeedsHint": "Try adding more sources or check back later.",
         "emptyStateSearchHint": "Try refining your search or check back later.",
+        "emptyStateAllRead": "All caught up!",
+        "emptyStateAllReadHint": "You've read all your feeds. Check back later for new content.",
         "mcpHint": "For further conversational analysis, use an MCP client, such as {cherryStudioLink}.",
         "todayReadPrefix": "Read Today",
         "todayReadSuffix": "Items",

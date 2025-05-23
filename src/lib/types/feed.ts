@@ -4,8 +4,8 @@ export interface FeedLabels {
 }
 
 export interface FeedVO {
+    id?: number; // Optional numeric ID from backend
     labels: FeedLabels;
     time: string;
-    id?: string; // Optional pre-calculated ID
     // Add other potential fields if necessary
 } 
